@@ -49,3 +49,16 @@ for i in data.index: #range(1, len(data.index)):
     # Summation
     data.loc[i, '10Be concentration at surface [atoms/g]'] = dC.sum()
 
+
+### Plotting scratch space ###
+
+from matplotlib import pyplot as plt
+plt.plot(data['Age [yr BP]'][1:]/1000, data['10Be concentration at surface [atoms/g]'][1:], 'k-', linewidth=2)
+plt.xlabel('Age [ka]', fontsize=14)
+plt.ylabel('10Be concentration at surface [atoms/g]', fontsize=14)
+plt.twinx()
+plt.step(data['Age [yr BP]'][1:]/1000, data['Erosion rate [mm/yr]'][1:], '0.5', linewidth=2)
+plt.ylabel('Catchment-averaged erosion rate [mm/yr]', color='.5', fontsize=14)
+plt.tight_layout()
+plt.show()
+
