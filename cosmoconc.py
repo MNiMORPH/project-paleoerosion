@@ -57,7 +57,7 @@ plt.plot(data['Age [yr BP]'][1:]/1000, data['10Be concentration at surface [atom
 plt.xlabel('Age [ka]', fontsize=14)
 plt.ylabel('10Be concentration at surface [atoms/g]', fontsize=14)
 plt.twinx()
-plt.step(data['Age [yr BP]'][1:]/1000, data['Erosion rate [mm/yr]'][1:], '0.5', linewidth=2)
+plt.step(data['Age [yr BP]'][1:]/1000, data['Erosion rate [mm/yr]'][:-1], '0.5', linewidth=2)
 plt.ylabel('Catchment-averaged erosion rate [mm/yr]', color='.5', fontsize=14)
 plt.tight_layout()
 plt.show()
