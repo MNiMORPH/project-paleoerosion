@@ -50,10 +50,25 @@ for i in data.index: #range(1, len(data.index)):
     data.loc[i, '10Be concentration at surface [atoms/g]'] = dC.sum()
 
 
+### Scratch to compare against data ###
+
+# No error bars in age for now: ages must match what we have in the code
+crn = pd.read_csv('test_synth_data.csv')
+#diff = crn.merge(data[['Age [yr BP]','10Be concentration at surface [atoms/g]']], on='Age [yr BP]')
+# In case join is faster
+diff = crn.join(data.set_index('Age [yr BP]')['10Be concentration at surface [atoms/g]'], on='Age [yr BP]')
+diff['10Be error [atoms/g]'] = np.abs( diff['10Be Concentration [atoms/g]'] - 
+                               diff['10Be concentration at surface [atoms/g]'] )
+diff['Within 2SD'] = diff['10Be error [atoms/g]'] < 2*diff['10Be SD [atoms/g]']
+diff['Within 1SD'] = diff['10Be error [atoms/g]'] < diff['10Be SD [atoms/g]']
+
 ### Plotting scratch space ###
 
 from matplotlib import pyplot as plt
 plt.plot(data['Age [yr BP]'][1:]/1000, data['10Be concentration at surface [atoms/g]'][1:], 'k-', linewidth=2)
+plt.errorbar( diff['Age [yr BP]']/1000, diff['10Be Concentration [atoms/g]'],
+              yerr=diff['10Be SD [atoms/g]'], marker='o', color='k',
+              linestyle='', elinewidth=2 )
 plt.xlabel('Age [ka]', fontsize=14)
 plt.ylabel('10Be concentration at surface [atoms/g]', fontsize=14)
 plt.twinx()
