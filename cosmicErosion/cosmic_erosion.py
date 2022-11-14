@@ -51,7 +51,7 @@ class CosmicErosion(object):
         elif type(crn_data) is pd.core.frame.DataFrame:
             self.crn_data = crn_data
         elif crn_data is None:
-            pass
+            self.crn_data = crn_data
         else:
             raise TypeError('Type must be str or Pandas DataFrame or None')
     
@@ -143,6 +143,34 @@ class CosmicErosion(object):
             self.plot(show_plot, plot_savepath)
         if csv_savepath:
             self.model_io.to_csv(csv_savepath)
+
+    ###############################
+    # EVALUATE MODEL AGAINST DATA #
+    ###############################
+    
+    def evaluate(self):
+        """
+        Evaluate model against data
+        """
+        
+        if self.crn_data is None:
+            raise TypeError('None-type crn_data: Should be Pandas DataFrame')
+        
+        #diff = crn.merge(data[['Age [yr BP]','10Be concentration at surface [atoms/g]']], on='Age [yr BP]')
+        
+        # In case join is faster
+        self.crn_data = self.crn_data.join( 
+                      self.model_io.set_index('Age [yr BP]')
+                      ['Modeled surface [10Be] [atoms/g]'], on='Age [yr BP]'
+                      )
+        self.crn_data['10Be error [atoms/g]'] = np.abs( 
+                      self.crn_data['10Be Concentration [atoms/g]'] - 
+                      self.crn_data['Modeled surface [10Be] [atoms/g]']
+                      )
+        self.crn_data['Within 2SD'] = self.crn_data['10Be error [atoms/g]'] < \
+                                            2*self.crn_data['10Be SD [atoms/g]']
+        self.crn_data['Within 1SD'] = self.crn_data['10Be error [atoms/g]'] < \
+                                              self.crn_data['10Be SD [atoms/g]']
 
     ############
     # PLOTTING #
