@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import sys
 sys.path.append('./cosmicErosion')
 from cosmic_erosion import CosmicErosion
