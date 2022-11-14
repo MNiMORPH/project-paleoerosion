@@ -19,7 +19,7 @@ class CosmicErosion(object):
                         The erosion rate is that starting at the associated
                         age and continuing until the subsequent time step.
                         This may be a Pandas DataFrame or a path to a CSV file.
-        :type [model_io]: pandas.core.frame.DataFrame or csv
+        :type [model_io]: pandas.core.frame.DataFrame or str
         
         :param [P0]: Surface 10Be production rate
         :type [P0]: float
