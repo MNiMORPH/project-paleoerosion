@@ -5,6 +5,11 @@ import numpy as np
 
 
 class CosmicErosion(object):
+    """
+    Simulate the cosmogenic 10Be concentration of sediments gathered from
+    a drainage basin in order to relate it to a possible history of
+    catchment-averaged erosion rate.
+    """
 
     def __init__(self, model_io, P0, attenuation_length ):
         """
