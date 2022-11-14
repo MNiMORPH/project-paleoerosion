@@ -182,6 +182,11 @@ class CosmicErosion(object):
         """
         from matplotlib import pyplot as plt
         plt.plot(self.model_io['Age [yr BP]'][1:]/1000, self.model_io['Modeled surface [10Be] [atoms/g]'][1:], 'k-', linewidth=2)
+        if self.crn_data is not None:
+            plt.errorbar( self.crn_data['Age [yr BP]']/1000,
+                          self.crn_data['10Be Concentration [atoms/g]'],
+                          yerr=self.crn_data['10Be SD [atoms/g]'],
+                          marker='o', color='k', linestyle='', elinewidth=2 )
         plt.xlabel('Age [ka]', fontsize=14)
         plt.ylabel('Modeled surface [10Be] [atoms/g]', fontsize=14)
         plt.twinx()
