@@ -49,6 +49,10 @@ class CosmicErosion(object):
     def get_attenuation_length(self):
         return self.attenuation_length
         
+    ##########################
+    # IRUF interface (CSDMS) #
+    ##########################
+
     def initialize(self):
         """
         Set up the variables that are defined only once
@@ -106,6 +110,10 @@ class CosmicErosion(object):
         if csv_savepath:
             self.model_io.to_csv(csv_savepath)
 
+    ############
+    # PLOTTING #
+    ############
+    
     def plot(self, show=True, savepath=None):
         """
         Plot model output
