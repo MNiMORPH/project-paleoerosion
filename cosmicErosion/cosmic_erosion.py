@@ -11,7 +11,7 @@ class CosmicErosion(object):
     catchment-averaged erosion rate.
     """
 
-    def __init__(self, model_io, P0, attenuation_length ):
+    def __init__(self, model_io, P0, attenuation_length, crn_data = None ):
         """
         :param [model_io]: Input table with two columns named:
                         (1) Age [yr BP]
@@ -26,6 +26,13 @@ class CosmicErosion(object):
         
         :param [attenuation_length]: 10Be production attenuation length [m]
         :type [attenuation_length]: float
+
+        :param [crn_data]: Input table with three columns named:
+                        (1) Age [yr BP]
+                        (2) 10Be Concentration [atoms/g]
+                        (3) 10Be SD [atoms/g]
+                        where "SD" is the standard deviation.
+        :type [crn_data]: pandas.core.frame.DataFrame or str or None, optional
         """
 
         if type(model_io) is str:
@@ -37,7 +44,17 @@ class CosmicErosion(object):
         
         self.P0 = P0
         self.attenuation_length = attenuation_length
-
+        
+        # Check for CRN data
+        if type(crn_data) is str:
+            self.crn_data = pd.read_csv(crn_data)
+        elif type(crn_data) is pandas.core.frame.DataFrame:
+            self.crn_data = crn_data
+        elif crn_data is None:
+            pass
+        else:
+            raise TypeError('Type must be str or Pandas DataFrame or None')
+    
     #######################
     # GETTERS AND SETTERS #
     #######################
