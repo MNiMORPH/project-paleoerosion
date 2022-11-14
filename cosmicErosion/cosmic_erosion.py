@@ -32,6 +32,22 @@ class CosmicErosion(object):
         
         self.P0 = P0
         self.attenuation_length = attenuation_length
+
+    #######################
+    # GETTERS AND SETTERS #
+    #######################
+
+    def set_P0(self, P0):
+        self.P0 = P0
+        
+    def get_P0(self):
+        return self.P0
+
+    def set_attenuation_length(self):
+        self.attenuation_length = attenuation_length
+        
+    def get_attenuation_length(self):
+        return self.attenuation_length
         
     def initialize(self):
         """
