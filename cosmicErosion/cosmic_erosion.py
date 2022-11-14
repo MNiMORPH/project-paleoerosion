@@ -65,13 +65,13 @@ class CosmicErosion(object):
     def get_P0(self):
         return self.P0
 
-    def set_attenuation_length(self):
+    def set_attenuation_length(self, attenuation_length):
         self.attenuation_length = attenuation_length
         
     def get_attenuation_length(self):
         return self.attenuation_length
 
-    def set_model_io(self):
+    def set_model_io(self, model_io):
         self.model_io = model_io
     
     def get_model_io(self):
