@@ -77,6 +77,12 @@ class CosmicErosion(object):
     def get_model_io(self):
         return self.model_io
         
+    def set_crn_data(self, crn_data):
+        self.crn_data = crn_data
+    
+    def get_crn_data(self):
+        return self.crn_data
+
     ##########################
     # IRUF interface (CSDMS) #
     ##########################
