@@ -37,7 +37,7 @@ class CosmicErosion(object):
 
         if type(model_io) is str:
             self.model_io = pd.read_csv(model_io)
-        elif type(model_io) is pandas.core.frame.DataFrame:
+        elif type(model_io) is pd.core.frame.DataFrame:
             self.model_io = model_io
         else:
             raise TypeError('Type must be str or Pandas DataFrame')
@@ -48,7 +48,7 @@ class CosmicErosion(object):
         # Check for CRN data
         if type(crn_data) is str:
             self.crn_data = pd.read_csv(crn_data)
-        elif type(crn_data) is pandas.core.frame.DataFrame:
+        elif type(crn_data) is pd.core.frame.DataFrame:
             self.crn_data = crn_data
         elif crn_data is None:
             pass
