@@ -48,6 +48,12 @@ class CosmicErosion(object):
         
     def get_attenuation_length(self):
         return self.attenuation_length
+
+    def set_model_io(self):
+        self.model_io = model_io
+    
+    def get_model_io(self):
+        return self.model_io
         
     ##########################
     # IRUF interface (CSDMS) #
