@@ -132,9 +132,11 @@ class CosmicErosion(object):
 
         # Piecewise linear integration
         dC = self.P0 * self.attenuation_length / eros_rate * ( 
-                              np.exp( (z_sample + eros_rate * _dt) / 
+                              np.exp( np.array(z_sample + eros_rate * _dt,
+                                                dtype=float) / 
                                                 self.attenuation_length ) - 
-                              np.exp(z_sample / self.attenuation_length)
+                              np.exp( np.array(z_sample, dtype=float) / 
+                                                self.attenuation_length )
                               )
 
         # Summation
