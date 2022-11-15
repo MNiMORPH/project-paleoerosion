@@ -225,15 +225,17 @@ class CosmicMonty(object):
 
         self.ages = ages
 
-    def initialize_minmax_mode(self, erosion_rate_min=None,
-                                      erosion_rate_max=None):
+    def initialize_minmax_mode(self, erosion_rate_min, erosion_rate_max):
         self.SD_mode = False
         self.MinMax_mode = True
+        self.erosion_rate_min = erosion_rate_min
+        self.erosion_rate_max = erosion_rate_max
 
-    def initialize_SD_mode(self, erosion_rate_mean=None,
-                                 erosion_rate_SD=None, n_SD=None):
+    def initialize_SD_mode(self, erosion_rate_mean, erosion_rate_SD):
         self.SD_mode = False
         self.MinMax_mode = True
+        self.erosion_rate_mean = erosion_rate_mean
+        self.erosion_rate_SD = erosion_rate_SD
 
     def initialize_output(self, csv_dir_1sigma=None, plot_dir_1sigma=None,
                                 csv_dir_2sigma=None, plot_dir_2sigma=None ):
