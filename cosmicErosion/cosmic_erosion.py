@@ -290,4 +290,9 @@ class CosmicMonty(object):
                     self.ce.plot( show=False,
                                   savepath=path.join(self.csv_dir_2sigma,
                                                 'model_run_'+'%'+npad+'d' %i) )
-              
+            # Clean columns
+            self.ce.crn_data = self.ce.crn_data.drop(
+                  columns = [ 'Modeled surface [10Be] [atoms/g]',
+                              '10Be error [atoms/g]',
+                              'Within 2SD', 'Within 1SD'] )
+
