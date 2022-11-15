@@ -274,7 +274,6 @@ class CosmicMonty(object):
             self.ce.evaluate()
             if (self.ce.crn_data['Within 1SD'] == True).all():
                 if self.csv_dir_1sigma is not None:
-                    # Arbitrarily zero-padded by 6
                     self.ce.model_io.to_csv( path.join(self.csv_dir_1sigma,
                                                 'model_run_'+'%'+npad+'d' %i) )
                 if self.plot_dir_1sigma is not None:
@@ -283,7 +282,6 @@ class CosmicMonty(object):
                                                 'model_run_'+'%'+npad+'d' %i) )
             if (self.ce.crn_data['Within 1SD'] == True).all():
                 if self.csv_dir_2sigma is not None:
-                    # Arbitrarily zero-padded by 6
                     self.ce.model_io.to_csv( path.join(self.csv_dir_2sigma,
                                                 'model_run_'+'%'+npad+'d' %i) )
                 if self.plot_dir_2sigma is not None:
