@@ -253,7 +253,8 @@ class CosmicMonty(object):
         for i in range(n):
             npad = len(str(n))
             if verbose:
-                print(('%'+str(npad)+'s') %i + ' / ' + str(n) + ' -- ', end='')
+                print( ('%'+str(npad)+'s') %(i+1) + ' / ' + str(n) + ' -- ',
+                        end='' )
             if self.SD_mode:
                 # Should work with scalars or Numpy arrays
                 self.ce.model_io.loc[ :len(self.ce.model_io) - 2, 
