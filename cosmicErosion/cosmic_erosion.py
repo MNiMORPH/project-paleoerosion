@@ -14,6 +14,9 @@ class CosmicErosion(object):
     a drainage basin in order to relate it to a possible history of
     catchment-averaged erosion rate.
     """
+    import pandas as pd
+    import numpy as np
+    from os import path
 
     def __init__(self, model_io, P0, attenuation_length, crn_data = None ):
         """
@@ -249,14 +252,14 @@ class CosmicMonty(object):
             npad = len(str(n))
             if self.SD_mode:
                 # Should work with scalars or Numpy arrays
-                self.ce.model_io['Erosion rate [mm/yr]'] = \
+                self.ce.model_io['Erosion rate [mm/yr]'][:-1] = \
                     self.erosion_rate_SD \
                     * np.random.standard_normal( len(self.ce.model_io
                                                       ['Age [yr BP]']) - 1 ) \
                     + self.erosion_rate_mean
             elif self.MinMax_mode:
                 # Should work with scalars or Numpy arrays
-                self.ce.model_io['Erosion rate [mm/yr]'] = \
+                self.ce.model_io['Erosion rate [mm/yr]'][:-1] = \
                     (self.erosion_rate_max - self.erosion_rate_min) \
                     * np.random.random_sample( len(self.ce.model_io
                                                       ['Age [yr BP]']) - 1 ) \
