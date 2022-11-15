@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 #csv_dir = '/home/awickert/Desktop/CosmicMonty2sigmaTest'
-csv_dir = '/home/awickert/Desktop/CosmicMontyTest03/1_sigma'
+csv_dir = '/home/awickert/Desktop/CosmicMontyTest04/1_sigma'
 
 crn_data = pd.read_csv('test_synth_data.csv')
 
@@ -23,11 +23,11 @@ ax3 = plt.subplot(3,1,3)
 
 for runfile in runfiles:
     model_io = pd.read_csv(runfile)
-    ax1.plot( model_io['Age [yr BP]'][1:]/1000,
-              model_io['Modeled surface [10Be] [atoms/g]'][1:],
+    ax1.plot( model_io['Age [yr BP]']/1000,
+              model_io['Modeled surface [10Be] [atoms/g]'],
               'k-', linewidth=0.5, alpha=0.2 )
-    ax2.step( model_io['Age [yr BP]'][1:]/1000,
-              model_io['Erosion rate [mm/yr]'][:-1],
+    ax2.step( model_io['Age [yr BP]']/1000,
+              model_io['Erosion rate [mm/yr]'],
               'k-', linewidth=0.5, alpha=0.2 )
 
 if crn_data is not None:
@@ -52,16 +52,37 @@ for i in model_io.index:
     erosResults.loc[i, 'mean'] = np.mean(_tmp)
     erosResults.loc[i, 'median'] = np.median(_tmp)
     erosResults.loc[i, 'sd'] = np.std(_tmp)
-erosResults = erosResults[1:-1]
+erosResults = erosResults[:-1]
 
 
 
-
-ax3.plot( erosResults['Age [yr BP]']/1000., erosResults['median'], 'k-' )
+# Use standard error
+ax3.step( erosResults['Age [yr BP]']/1000., erosResults['median'], 'k-',
+          where='post')
 ax3.fill_between( np.array(erosResults['Age [yr BP]']/1000., dtype=float),
-                  np.array(erosResults['mean']-erosResults['sd'], dtype=float),
-                  np.array(erosResults['mean']+erosResults['sd'], dtype=float),
-                  color='0.5' )
+                  np.array(erosResults['mean'] - 
+                  erosResults['sd']/len(erosResults['sd'])**.5, dtype=float),
+                  np.array(erosResults['mean'] + 
+                  erosResults['sd']/len(erosResults['sd'])**.5, dtype=float),
+                  step='post',
+                  color='k',
+                  alpha=0.5 )
+# SD
+#ax3.fill_between( np.array(erosResults['Age [yr BP]']/1000., dtype=float),
+#                  np.array(erosResults['mean']-erosResults['sd'], dtype=float),
+#                  np.array(erosResults['mean']+erosResults['sd'], dtype=float),
+#                  step='post',
+#                  color='k',
+#                  alpha=0.5 )
+
+ax1.set_xlim(( model_io['Age [yr BP]'][len(model_io)-1]/1000, model_io['Age [yr BP]'][1]/1000 + 5 ))
+ax2.set_xlim(( model_io['Age [yr BP]'][len(model_io)-1]/1000, model_io['Age [yr BP]'][1]/1000 + 5 ))
+ax3.set_xlim(( model_io['Age [yr BP]'][len(model_io)-1]/1000, model_io['Age [yr BP]'][1]/1000 + 5 ))
+
+ax1.set_xlim(-.5,25)
+ax1.set_ylim(50000,90000)
+ax2.set_xlim(-.5,25)
+ax3.set_xlim(-.5,25)
 
 ax1.set_ylabel('Modeled surface\n[10Be] [atoms/g]', fontsize=14)
 ax2.set_ylabel('Catchment-averaged\nerosion rate [mm/yr]', fontsize=14)
