@@ -45,7 +45,7 @@ class CosmicErosion(object):
             self.model_io = pd.read_csv(model_io)
         elif type(model_io) is pd.core.frame.DataFrame:
             self.model_io = model_io
-        elif type(model_io) is None:
+        elif type(model_io) is type(None):
             self.model_io = pd.DataFrame( columns=['Age [yr BP]', 
                                                    'Erosion rate [mm/yr]'] )
         else:
@@ -252,14 +252,14 @@ class CosmicMonty(object):
                 self.ce.model_io['Erosion rate [mm/yr]'] = \
                     self.erosion_rate_SD \
                     * np.random.standard_normal( len(self.ce.model_io
-                                                          ['Age [yr BP]']) ) \
+                                                      ['Age [yr BP]']) - 1 ) \
                     + self.erosion_rate_mean
             elif self.MinMax_mode:
                 # Should work with scalars or Numpy arrays
                 self.ce.model_io['Erosion rate [mm/yr]'] = \
                     (self.erosion_rate_max - self.erosion_rate_min) \
                     * np.random.random_sample( len(self.ce.model_io
-                                                          ['Age [yr BP]']) ) \
+                                                      ['Age [yr BP]']) - 1 ) \
                     + self.erosion_rate_min
             else:
                 raise ValueError("Neither SD_mode nor MinMax_mode are set.")
