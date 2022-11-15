@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-
+from os import path
 
 #################
 # FORWARD MODEL #
@@ -217,14 +217,10 @@ class CosmicErosion(object):
 class CosmicMonty(object):
 
     def __init__(self, P0, attenuation_length, ages, crn_data):
-
         self.SD_mode = False
         self.MinMax_mode = False
-
         self.ce = CosmicErosion(None, P0, attenuation_length, crn_data=crn_data)
-
-        self.ages = ages
-
+        
     def initialize_minmax_mode(self, erosion_rate_min, erosion_rate_max):
         self.SD_mode = False
         self.MinMax_mode = True
@@ -237,6 +233,10 @@ class CosmicMonty(object):
         self.erosion_rate_mean = erosion_rate_mean
         self.erosion_rate_SD = erosion_rate_SD
 
+    def initialize_ages(self, ages):
+        # Reaching directly into table instead of using any kind of setter
+        self.ce.model_io['Age [yr BP]'] = ages
+
     def initialize_output(self, csv_dir_1sigma=None, plot_dir_1sigma=None,
                                 csv_dir_2sigma=None, plot_dir_2sigma=None ):
         self.csv_dir_1sigma = csv_dir_1sigma
@@ -245,7 +245,44 @@ class CosmicMonty(object):
         self.plot_dir_2sigma = plot_dir_2sigma
 
     def mcloop(self, n, verbose=False):
-        pass
-    
-    
-
+        for i in range(n):
+            npad = len(str(n))
+            if self.SD_mode:
+                # Should work with scalars or Numpy arrays
+                self.ce.model_io['Erosion rate [mm/yr]'] = \
+                    self.erosion_rate_SD \
+                    * np.random.standard_normal( len(self.ce.model_io
+                                                          ['Age [yr BP]']) ) \
+                    + self.erosion_rate_mean
+            elif self.MinMax_mode:
+                # Should work with scalars or Numpy arrays
+                self.ce.model_io['Erosion rate [mm/yr]'] = \
+                    (self.erosion_rate_max - self.erosion_rate_min) \
+                    * np.random.random_sample( len(self.ce.model_io
+                                                          ['Age [yr BP]']) ) \
+                    + self.erosion_rate_min
+            else:
+                raise ValueError("Neither SD_mode nor MinMax_mode are set.")
+            
+            self.ce.initialize()
+            self.ce.run()
+            self.ce.evaluate()
+            if (self.ce.crn_data['Within 1SD'] == True).all():
+                if self.csv_dir_1sigma is not None:
+                    # Arbitrarily zero-padded by 6
+                    self.ce.model_io.to_csv( path.join(self.csv_dir_1sigma,
+                                                'model_run_'+'%'+npad+'d' %i) )
+                if self.plot_dir_1sigma is not None:
+                    self.ce.plot( show=False,
+                                  savepath=path.join(self.csv_dir_1sigma,
+                                                'model_run_'+'%'+npad+'d' %i) )
+            if (self.ce.crn_data['Within 1SD'] == True).all():
+                if self.csv_dir_2sigma is not None:
+                    # Arbitrarily zero-padded by 6
+                    self.ce.model_io.to_csv( path.join(self.csv_dir_2sigma,
+                                                'model_run_'+'%'+npad+'d' %i) )
+                if self.plot_dir_2sigma is not None:
+                    self.ce.plot( show=False,
+                                  savepath=path.join(self.csv_dir_2sigma,
+                                                'model_run_'+'%'+npad+'d' %i) )
+              
