@@ -283,19 +283,19 @@ class CosmicMonty(object):
             if (self.ce.crn_data['Within 1SD'] == True).all():
                 if self.csv_dir_1sigma is not None:
                     self.ce.model_io.to_csv( path.join(self.csv_dir_1sigma,
-                                                'model_run_'+'%'+npad+'d' %i) )
+                                'model_run_'+('%0'+str(npad)+'d') %i+'.csv') )
                 if self.plot_dir_1sigma is not None:
                     self.ce.plot( show=False,
                                   savepath=path.join(self.csv_dir_1sigma,
-                                                'model_run_'+'%'+npad+'d' %i) )
+                                'model_run_'+('%0'+str(npad)+'d') %i)+'.png' )
             if (self.ce.crn_data['Within 1SD'] == True).all():
                 if self.csv_dir_2sigma is not None:
                     self.ce.model_io.to_csv( path.join(self.csv_dir_2sigma,
-                                                'model_run_'+'%'+npad+'d' %i) )
+                                'model_run_'+('%0'+str(npad)+'d') %i+'.csv') )
                 if self.plot_dir_2sigma is not None:
                     self.ce.plot( show=False,
                                   savepath=path.join(self.csv_dir_2sigma,
-                                                'model_run_'+'%'+npad+'d' %i) )
+                                'model_run_'+('%0'+str(npad)+'d') %i+'.png') )
             # Clean columns
             self.ce.crn_data = self.ce.crn_data.drop(
                   columns = [ 'Modeled surface [10Be] [atoms/g]',
