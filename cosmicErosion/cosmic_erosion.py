@@ -252,6 +252,8 @@ class CosmicMonty(object):
     def mcloop(self, n, verbose=False):
         for i in range(n):
             npad = len(str(n))
+            if verbose:
+                print(('%'+str(npad)+'s') %i + ' / ' + str(n) + ' -- ', end='')
             if self.SD_mode:
                 # Should work with scalars or Numpy arrays
                 self.ce.model_io.loc[ :len(self.ce.model_io) - 2, 
@@ -274,6 +276,10 @@ class CosmicMonty(object):
             self.ce.initialize()
             self.ce.run()
             self.ce.evaluate()
+            if verbose:
+                print( np.sum((self.ce.crn_data['Within 2SD'] == True)),
+                       'of', len(self.ce.crn_data),
+                       'data points within error of model outputs.' )
             if (self.ce.crn_data['Within 1SD'] == True).all():
                 if self.csv_dir_1sigma is not None:
                     self.ce.model_io.to_csv( path.join(self.csv_dir_1sigma,
