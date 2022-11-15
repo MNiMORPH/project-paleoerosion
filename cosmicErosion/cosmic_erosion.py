@@ -288,7 +288,7 @@ class CosmicMonty(object):
                     self.ce.plot( show=False,
                                   savepath=path.join(self.csv_dir_1sigma,
                                 'model_run_'+('%0'+str(npad)+'d') %i)+'.png' )
-            if (self.ce.crn_data['Within 1SD'] == True).all():
+            if (self.ce.crn_data['Within 2SD'] == True).all():
                 if self.csv_dir_2sigma is not None:
                     self.ce.model_io.to_csv( path.join(self.csv_dir_2sigma,
                                 'model_run_'+('%0'+str(npad)+'d') %i+'.csv') )
@@ -302,3 +302,12 @@ class CosmicMonty(object):
                               '10Be error [atoms/g]',
                               'Within 2SD', 'Within 1SD'] )
 
+class MontyPlot(object):
+
+    def __init__(self, csv_dir):
+        import glob
+        runfiles = glob.glob(path.join(csv_dir, '*.csv'))
+    
+    
+    
+    
