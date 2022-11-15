@@ -23,7 +23,9 @@ class CosmicErosion(object):
                         The erosion rate is that starting at the associated
                         age and continuing until the subsequent time step.
                         This may be a Pandas DataFrame or a path to a CSV file.
-        :type [model_io]: pandas.core.frame.DataFrame or str
+                        It can be set to None, in which case it will be created
+                        as an empty DataFrame that can be populated later.
+        :type [model_io]: pandas.core.frame.DataFrame or str or None
         
         :param [P0]: Surface 10Be production rate
         :type [P0]: float
@@ -43,6 +45,9 @@ class CosmicErosion(object):
             self.model_io = pd.read_csv(model_io)
         elif type(model_io) is pd.core.frame.DataFrame:
             self.model_io = model_io
+        elif type(model_io) is None:
+            self.model_io = pd.DataFrame( columns=['Age [yr BP]', 
+                                                   'Erosion rate [mm/yr]'] )
         else:
             raise TypeError('Type must be str or Pandas DataFrame')
         
@@ -216,10 +221,8 @@ class CosmicMonty(object):
         self.SD_mode = False
         self.MinMax_mode = False
 
-        #self.ce = CosmicErosion(
+        self.ce = CosmicErosion(None, P0, attenuation_length)
 
-        self.P0 = P0
-        self.attenuation_length = attenuation_length
         self.ages = ages
 
     def initialize_minmax_mode(self, erosion_rate_min=None,
