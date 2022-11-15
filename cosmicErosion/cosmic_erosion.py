@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 
 
+#################
+# FORWARD MODEL #
+#################
+
 class CosmicErosion(object):
     """
     Simulate the cosmogenic 10Be concentration of sediments gathered from
@@ -200,3 +204,43 @@ class CosmicErosion(object):
         else:
             plt.close()
     
+
+################################
+# MONTE CARLO INVERSE MODELING #
+################################
+
+class CosmicMonty(object):
+
+    def __init__(self, P0, attenuation_length, ages):
+
+        self.SD_mode = False
+        self.MinMax_mode = False
+
+        #self.ce = CosmicErosion(
+
+        self.P0 = P0
+        self.attenuation_length = attenuation_length
+        self.ages = ages
+
+    def initialize_minmax_mode(self, erosion_rate_min=None,
+                                      erosion_rate_max=None):
+        self.SD_mode = False
+        self.MinMax_mode = True
+
+    def initialize_SD_mode(self, erosion_rate_mean=None,
+                                 erosion_rate_SD=None, n_SD=None):
+        self.SD_mode = False
+        self.MinMax_mode = True
+
+    def initialize_output(self, csv_dir_1sigma=None, plot_dir_1sigma=None,
+                                csv_dir_2sigma=None, plot_dir_2sigma=None ):
+        self.csv_dir_1sigma = csv_dir_1sigma
+        self.plot_dir_1sigma = plot_dir_1sigma
+        self.csv_dir_2sigma = csv_dir_2sigma
+        self.plot_dir_2sigma = plot_dir_2sigma
+
+    def mcloop(self, n, verbose=False):
+        pass
+    
+    
+
