@@ -216,12 +216,12 @@ class CosmicErosion(object):
 
 class CosmicMonty(object):
 
-    def __init__(self, P0, attenuation_length, ages):
+    def __init__(self, P0, attenuation_length, ages, crn_data):
 
         self.SD_mode = False
         self.MinMax_mode = False
 
-        self.ce = CosmicErosion(None, P0, attenuation_length)
+        self.ce = CosmicErosion(None, P0, attenuation_length, crn_data=crn_data)
 
         self.ages = ages
 
