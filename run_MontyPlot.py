@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 #csv_dir = '/home/awickert/Desktop/CosmicMonty2sigmaTest'
-csv_dir = '/home/awickert/Desktop/CosmicMontyTest/2_sigma_scratch'
+csv_dir = '/home/awickert/Desktop/CosmicMontyTest03/1_sigma'
 
 crn_data = pd.read_csv('test_synth_data.csv')
 

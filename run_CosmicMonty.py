@@ -24,15 +24,20 @@ erosion_rate_max[-1] = 0.1
 
 # Spin up should be close to initial concentration
 # Maybe make a function to help wtih this
-erosion_rate_min[0] = 0.066
-erosion_rate_max[0] = 0.068
+erosion_rate_min[0] = 0.05
+erosion_rate_max[0] = 0.07
+erosion_rate_min[1] = 0.05
+erosion_rate_max[2] = 0.07
 
 cm = CosmicMonty(5, 0.7, ages, 'test_synth_data.csv')
 
 cm.initialize_minmax_mode(erosion_rate_min, erosion_rate_max)
 cm.initialize_ages(ages)
-cm.initialize_output( csv_dir_2sigma = 
-                              '/home/awickert/Desktop/CosmicMonty2sigmaTest' )
+cm.initialize_output( csv_dir_1sigma = 
+                      '/home/awickert/Desktop/CosmicMontyTest03/1_sigma',
+                        csv_dir_2sigma = 
+                      '/home/awickert/Desktop/CosmicMontyTest03/2_sigma',
+                     )
 
 cm.mcloop(5000, verbose=True)
 
