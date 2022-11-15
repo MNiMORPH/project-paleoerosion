@@ -254,14 +254,16 @@ class CosmicMonty(object):
             npad = len(str(n))
             if self.SD_mode:
                 # Should work with scalars or Numpy arrays
-                self.ce.model_io['Erosion rate [mm/yr]'][:-1] = \
+                self.ce.model_io.loc[ :len(self.ce.model_io) - 2, 
+                                        'Erosion rate [mm/yr]' ] = \
                     self.erosion_rate_SD \
                     * np.random.standard_normal( len(self.ce.model_io
                                                       ['Age [yr BP]']) - 1 ) \
                     + self.erosion_rate_mean
             elif self.MinMax_mode:
                 # Should work with scalars or Numpy arrays
-                self.ce.model_io['Erosion rate [mm/yr]'][:-1] = \
+                self.ce.model_io.loc[ :len(self.ce.model_io) - 2, 
+                                        'Erosion rate [mm/yr]' ] = \
                     (self.erosion_rate_max - self.erosion_rate_min) \
                     * np.random.random_sample( len(self.ce.model_io
                                                       ['Age [yr BP]']) - 1 ) \
