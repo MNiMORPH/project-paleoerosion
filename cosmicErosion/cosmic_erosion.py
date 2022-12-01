@@ -3,6 +3,8 @@
 import pandas as pd
 import numpy as np
 from os import path
+import warnings
+from scipy.stats import gamma, beta
 
 #################
 # FORWARD MODEL #
@@ -222,9 +224,13 @@ class CosmicErosion(object):
 class CosmicMonty(object):
 
     def __init__(self, P0, attenuation_length, ages, crn_data):
+        # !!!!!!!! WARNING: AGES NOT CURRENTLY USED HERE <-- FIX LATER
         self.SD_mode = False
         self.MinMax_mode = False
         self.ce = CosmicErosion(None, P0, attenuation_length, crn_data=crn_data)
+        # Placeholder for including the gamma-function scaling parameter
+        # scale=?
+        # shape=1/scale [* mean of last data point]
         
     def initialize_minmax_mode(self, erosion_rate_min, erosion_rate_max):
         self.SD_mode = False
@@ -309,6 +315,176 @@ class MontyPlot(object):
         import glob
         runfiles = glob.glob(path.join(csv_dir, '*.csv'))
     
+
+#############################
+# BAYESIAN INVERSE MODELING #
+#############################
+
+class CosmicBay(object):
+
+    from scipy.stats import gamma, beta
+
+    def __init__(self, P0, attenuation_length, ages, crn_data, memory=1):
+        self.ce = CosmicErosion(None, P0, attenuation_length, crn_data=crn_data)
+        self.ages=ages
+        self.bayesian_memory=memory # How many time steps to average over
+                                    # in Bayesian series
+        if memory != 1:
+            warnings.warn("WARNING! BAYESIAN MEMORY NOT YET INCORPORATED!")
+        
+        # Hard-code memory for now
+        self.bayesian_memory = beta.pdf(np.linspace(0, 1, 11), 4, 1)
+        self.bayesian_memory /= np.sum(self.bayesian_memory)
     
+    def initialize_ages(self, ages=None):
+        # Reaching directly into table instead of using any kind of setter
+        if ages is None:
+            # And if self.ages is none, well, whoops. -- not possible now
+            self.ce.model_io['Age [yr BP]'] = self.ages
+        else:
+            self.ce.model_io['Age [yr BP]'] = ages
     
-    
+    def initialize_erosion_rates(self, spinup_min=None, spinup_max=None,
+                                       special_min=None, special_max=None,
+                                       special_i=None):
+        """
+        Bayesian everywhere except where it is random (spinup, special times)
+        special_min and special_max should be either of length len(special_i)
+        or length 1 (untested, but I think)
+        """
+        
+        if spinup_min is None:
+            spinup_min = self.spinup_min
+        else:
+            self.spinup_min = spinup_min
+        if spinup_max is None:
+            spinup_max = self.spinup_max
+        else:
+            self.spinup_max = spinup_max
+        if special_min is None:
+            special_min = self.special_min
+        else:
+            self.special_min = special_min
+        if special_max is None:
+            special_max = self.special_max
+        else:
+            self.special_max = special_max
+        if special_i is None:
+            special_i = self.special_i
+        else:
+            self.special_i = special_i
+
+        erosion_rates = np.full(len(self.ages), np.nan)
+
+        # For copy/paste tests
+        #erosion_rates *= np.nan
+
+        # Initial erosion rate
+        erosion_rates[0] = (spinup_max - spinup_min) \
+                                * np.random.random_sample() \
+                                + spinup_min
+
+        # Set erosion rates at special times
+        # To allow array operations if needed
+        if not np.isscalar(special_max):
+            special_max = np.array(special_max)
+        if not np.isscalar(special_min):
+            special_min = np.array(special_min)
+        if not np.isscalar(special_i):
+            n_special = len(special_i)
+            special_i = np.array(special_i)
+        else:
+            n_special = 1
+        special_erosion_rates = (special_max - special_min) \
+                                * np.random.random_sample(n_special) \
+                                + special_min
+        erosion_rates[special_i] = special_erosion_rates
+
+
+        # Bayesian series
+        bayesian_memory = self.bayesian_memory
+        # -1 because the last applies to the future
+        for i in range(len(erosion_rates)-1):
+            if np.isnan(erosion_rates[i]):
+                # Gamma function, always positive,
+                # with mean at last value
+                if i >= 11:
+                    memory_mean = np.sum( bayesian_memory
+                                            * erosion_rates[i-11:i] )
+                else:
+                    memory_mean = np.sum( bayesian_memory[-i:]
+                                            * erosion_rates[:i] ) \
+                                    / np.sum(bayesian_memory[-i:])
+                                # CHECK FOR ANY BUG HERE: CODING QUICKLY
+                    
+                erosion_rates[i] = memory_mean*gamma.rvs(4)/4.
+
+        """
+        # Bayesian series
+        # -1 because the last applies to the future
+        for i in range(len(erosion_rates) - 1):
+            if np.isnan(erosion_rates[i]):
+                # Gamma function, always positive,
+                # with mean at last value
+                try:
+                    erosion_rates[i] = erosion_rates[i-1]*gamma.rvs(4)/4.
+                except:
+                    erosion_rates[i] = 0 #gamma.rvs( 1E-8 )
+                    warnings.warn("0 wall")
+                    # May have crashed into a 0 wall
+                    # Let it stay there for now
+        """
+
+
+        self.erosion_rates = erosion_rates
+
+        
+    def initialize_output(self, csv_dir_1sigma=None, plot_dir_1sigma=None,
+                                csv_dir_2sigma=None, plot_dir_2sigma=None ):
+        self.csv_dir_1sigma = csv_dir_1sigma
+        self.plot_dir_1sigma = plot_dir_1sigma
+        self.csv_dir_2sigma = csv_dir_2sigma
+        self.plot_dir_2sigma = plot_dir_2sigma
+
+    def loop(self, n, verbose=False):
+        for i in range(n):
+            npad = len(str(n))
+            if verbose:
+                print( ('%'+str(npad)+'s') %(i+1) + ' / ' + str(n) + ' -- ',
+                        end='' )
+                        
+            # Will use these values instead of initial initialization
+            self.initialize_erosion_rates()
+            #print(self.erosion_rates)
+                        
+            self.ce.model_io[ 'Erosion rate [mm/yr]' ] = self.erosion_rates
+            
+            self.ce.initialize()
+            self.ce.run()
+            self.ce.evaluate()
+            if verbose:
+                print( np.sum((self.ce.crn_data['Within 2SD'] == True)),
+                       'of', len(self.ce.crn_data),
+                       'data points within error of model outputs.' )
+            if (self.ce.crn_data['Within 1SD'] == True).all():
+                if self.csv_dir_1sigma is not None:
+                    self.ce.model_io.to_csv( path.join(self.csv_dir_1sigma,
+                                'model_run_'+('%0'+str(npad)+'d') %i+'.csv') )
+                if self.plot_dir_1sigma is not None:
+                    self.ce.plot( show=False,
+                                  savepath=path.join(self.csv_dir_1sigma,
+                                'model_run_'+('%0'+str(npad)+'d') %i)+'.png' )
+            if (self.ce.crn_data['Within 2SD'] == True).all():
+                if self.csv_dir_2sigma is not None:
+                    self.ce.model_io.to_csv( path.join(self.csv_dir_2sigma,
+                                'model_run_'+('%0'+str(npad)+'d') %i+'.csv') )
+                if self.plot_dir_2sigma is not None:
+                    self.ce.plot( show=False,
+                                  savepath=path.join(self.csv_dir_2sigma,
+                                'model_run_'+('%0'+str(npad)+'d') %i+'.png') )
+            # Clean columns
+            self.ce.crn_data = self.ce.crn_data.drop(
+                  columns = [ 'Modeled surface [10Be] [atoms/g]',
+                              '10Be error [atoms/g]',
+                              'Within 2SD', 'Within 1SD'] )
+            
