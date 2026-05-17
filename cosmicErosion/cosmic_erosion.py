@@ -673,10 +673,11 @@ class CosmicAnalytical(object):
     """
 
     def __init__(self, P0, attenuation_length, crn_data,
-                 erosion_rate_min=0.01, erosion_rate_max=5.0, cluster_dt=500):
+                 erosion_rate_min=0.01, erosion_rate_max=5.0, cluster_dt=500,
+                 P0_mu=0.0, Lambda_mu=None):
         """
-        :param P0: Surface 10Be production rate [atoms/g/yr].
-        :param attenuation_length: Attenuation length [m].
+        :param P0: Spallogenic surface 10Be production rate [atoms/g/yr].
+        :param attenuation_length: Spallogenic attenuation length [m].
         :param crn_data: Path to CSV or DataFrame with columns
                          'Age [yr BP]', '10Be Concentration [atoms/g]',
                          '10Be SD [atoms/g]'.
@@ -685,12 +686,19 @@ class CosmicAnalytical(object):
         :param cluster_dt: Samples within this many years of each other are
                            merged into an inverse-variance-weighted mean before
                            solving. Default 500 yr.
+        :param P0_mu: Muogenic surface 10Be production rate [atoms/g/yr].
+                      Default 0 (muogenic production disabled).
+        :param Lambda_mu: Muogenic attenuation length [m]. If None, uses
+                          attenuation_length (treats muogenic with same Λ as
+                          spallogenic — consistent with Penprase et al. 2025).
         """
         self.P0 = P0
         self.Lambda = attenuation_length
         self.erosion_rate_min = erosion_rate_min
         self.erosion_rate_max = erosion_rate_max
         self.cluster_dt = cluster_dt
+        self.P0_mu = P0_mu
+        self.Lambda_mu = attenuation_length if Lambda_mu is None else Lambda_mu
 
         if isinstance(crn_data, str):
             self.crn_data = pd.read_csv(crn_data)
@@ -730,24 +738,31 @@ class CosmicAnalytical(object):
 
         return np.array(ages_c), np.array(concs_c), np.array(sigmas_c)
 
-    def _forward_step(self, C_prev, epsilon_mm, dt):
+    def _forward_step(self, C_sp_prev, C_mu_prev, epsilon_mm, dt):
         """
-        Exact ODE solution for surface [10Be] after one interval.
+        Exact ODE solution for surface [10Be] after one interval,
+        with separate spallogenic and muogenic components.
 
-        C_prev    : concentration at the older time [atoms/g]
+        C_sp_prev : spallogenic concentration at the older time [atoms/g]
+        C_mu_prev : muogenic concentration at the older time [atoms/g]
         epsilon_mm: erosion rate during the interval [mm/yr]
         dt        : interval duration [yr], positive
 
-        Returns modeled [10Be] at the younger boundary.
+        Returns (C_sp_next, C_mu_next).
         """
-        eps_m = epsilon_mm / 1e3                      # mm/yr → m/yr (matches CosmicErosion)
-        C_ss  = self.P0 * self.Lambda / eps_m         # steady-state [atoms/g]
-        decay = np.exp(-eps_m * dt / self.Lambda)
-        return C_prev * decay + C_ss * (1.0 - decay)
+        eps_m = epsilon_mm / 1e3
+        decay_sp = np.exp(-eps_m * dt / self.Lambda)
+        C_sp_next = (C_sp_prev * decay_sp
+                     + (self.P0 * self.Lambda / eps_m) * (1.0 - decay_sp))
+        decay_mu = np.exp(-eps_m * dt / self.Lambda_mu)
+        C_mu_next = (C_mu_prev * decay_mu
+                     + (self.P0_mu * self.Lambda_mu / eps_m) * (1.0 - decay_mu))
+        return C_sp_next, C_mu_next
 
-    def _solve_one(self, C_prev, C_obs, dt):
+    def _solve_one(self, C_sp_prev, C_mu_prev, C_obs, dt):
         """
-        Root-find for erosion rate [mm/yr] given C_prev, C_obs, and interval dt.
+        Root-find for erosion rate [mm/yr] given previous spallogenic and
+        muogenic concentrations, total observed concentration, and interval dt.
 
         Returns the root within [erosion_rate_min, erosion_rate_max].  If the
         bracket does not straddle zero (concentration out of achievable range),
@@ -756,7 +771,8 @@ class CosmicAnalytical(object):
         from scipy.optimize import brentq
 
         def residual(eps):
-            return self._forward_step(C_prev, eps, dt) - C_obs
+            C_sp, C_mu = self._forward_step(C_sp_prev, C_mu_prev, eps, dt)
+            return (C_sp + C_mu) - C_obs
 
         f_lo = residual(self.erosion_rate_min)
         f_hi = residual(self.erosion_rate_max)
@@ -790,21 +806,28 @@ class CosmicAnalytical(object):
 
         n = len(ages)
         erosion_rates = np.zeros(n)
-        C_surface     = np.zeros(n)
+        C_sp_surface  = np.zeros(n)
+        C_mu_surface  = np.zeros(n)
 
         # Step 0: steady-state from oldest datum
-        eps0_m         = self.P0 * self.Lambda / concs[0]   # m/yr
-        erosion_rates[0] = np.clip(eps0_m * 1e3,            # → mm/yr
+        # C_total = P0*Λ/ε + P0_mu*Λ_mu/ε  →  ε = (P0*Λ + P0_mu*Λ_mu) / C
+        eps0_m = (self.P0 * self.Lambda
+                  + self.P0_mu * self.Lambda_mu) / concs[0]
+        erosion_rates[0] = np.clip(eps0_m * 1e3,
                                    self.erosion_rate_min,
                                    self.erosion_rate_max)
-        C_surface[0] = concs[0]
+        C_sp_surface[0] = self.P0    * self.Lambda    / eps0_m
+        C_mu_surface[0] = self.P0_mu * self.Lambda_mu / eps0_m
 
         # Steps 1..n-1: root-find, older → younger
         for i in range(1, n):
-            dt = ages[i - 1] - ages[i]                      # positive [yr]
-            erosion_rates[i] = self._solve_one(C_surface[i - 1], concs[i], dt)
-            C_surface[i]     = self._forward_step(C_surface[i - 1],
-                                                  erosion_rates[i], dt)
+            dt = ages[i - 1] - ages[i]
+            erosion_rates[i] = self._solve_one(
+                C_sp_surface[i - 1], C_mu_surface[i - 1], concs[i], dt)
+            C_sp_surface[i], C_mu_surface[i] = self._forward_step(
+                C_sp_surface[i - 1], C_mu_surface[i - 1], erosion_rates[i], dt)
+
+        C_surface = C_sp_surface + C_mu_surface
 
         # Only store point-estimate results; Monte Carlo calls must not overwrite.
         if point_estimate:
