@@ -133,3 +133,6 @@ dmypy.json
 
 # MCMC chain files (large, reproducible from runner scripts)
 *_chain.csv
+
+# Figures (binary, reproducible from runner scripts)
+*.png
