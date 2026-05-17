@@ -776,7 +776,7 @@ class CosmicAnalytical(object):
         """
         Sequential root-find for erosion rates.
 
-        Uses clustered data by default; pass alternate arrays for bootstrap use.
+        Uses clustered data by default; pass alternate arrays for Monte Carlo use.
 
         erosion_rates[0]  steady-state rate before the oldest datum (ε = P₀Λ/C₁)
         erosion_rates[i]  rate during the interval [ages[i-1], ages[i]], i ≥ 1
@@ -806,44 +806,44 @@ class CosmicAnalytical(object):
             C_surface[i]     = self._forward_step(C_surface[i - 1],
                                                   erosion_rates[i], dt)
 
-        # Only store point-estimate results; bootstrap calls must not overwrite.
+        # Only store point-estimate results; Monte Carlo calls must not overwrite.
         if point_estimate:
             self._last_erosion_rates = erosion_rates
             self._last_C_surface     = C_surface
         return erosion_rates, ages
 
-    def bootstrap(self, n_boot=5000):
+    def propagate_uncertainty(self, n_mc=5000):
         """
         Monte Carlo uncertainty propagation.
 
         Perturbs clustered concentrations by their 1-sigma errors (Gaussian),
         repeats the sequential solve, and stores the ensemble as
-        self.boot_rates (shape: n_boot × n_clustered).
+        self.mc_rates (shape: n_mc × n_clustered).
         """
         rng = np.random.default_rng()
         n   = len(self.ages_clustered)
-        boot_rates = np.zeros((n_boot, n))
+        mc_rates = np.zeros((n_mc, n))
 
-        for k in range(n_boot):
+        for k in range(n_mc):
             concs_k = (self.conc_clustered
                        + rng.standard_normal(n) * self.sigma_clustered)
             concs_k = np.clip(concs_k, 1.0, None)
             rates_k, _ = self.solve(ages=self.ages_clustered, concs=concs_k)
-            boot_rates[k] = rates_k
+            mc_rates[k] = rates_k
 
-        self.boot_rates = boot_rates
-        return boot_rates
+        self.mc_rates = mc_rates
+        return mc_rates
 
     def summary_stats(self):
         """
         DataFrame of median and 16th/84th percentile erosion rates per cluster.
-        Requires bootstrap() to have been called first.
+        Requires propagate_uncertainty() to have been called first.
         """
-        if not hasattr(self, 'boot_rates'):
-            raise RuntimeError('Call bootstrap() before summary_stats().')
-        median = np.median(self.boot_rates, axis=0)
-        lo1, hi1 = np.percentile(self.boot_rates, [16, 84], axis=0)
-        lo2, hi2 = np.percentile(self.boot_rates, [2.5, 97.5], axis=0)
+        if not hasattr(self, 'mc_rates'):
+            raise RuntimeError('Call propagate_uncertainty() before summary_stats().')
+        median = np.median(self.mc_rates, axis=0)
+        lo1, hi1 = np.percentile(self.mc_rates, [16, 84], axis=0)
+        lo2, hi2 = np.percentile(self.mc_rates, [2.5, 97.5], axis=0)
         return pd.DataFrame({
             'age_yr_BP':    self.ages_clustered,
             'median_mm_yr': median,
@@ -861,9 +861,9 @@ class CosmicAnalytical(object):
         """
         Two-panel summary figure.
         (a) Modeled [10Be] trajectory overlaid on observed data.
-        (b) Erosion rate time series with 1-sigma bootstrap uncertainty band.
+        (b) Erosion rate time series with 1-sigma Monte Carlo uncertainty band.
 
-        Requires solve() and bootstrap() to have been called first.
+        Requires solve() and propagate_uncertainty() to have been called first.
         """
         from matplotlib import pyplot as plt
 
@@ -895,7 +895,7 @@ class CosmicAnalytical(object):
         ax_conc.text(0.02, 0.95, '(a)', transform=ax_conc.transAxes,
                      va='top', fontsize=11, fontweight='bold')
 
-        # --- Panel (b): erosion rate with bootstrap uncertainty ---
+        # --- Panel (b): erosion rate with Monte Carlo uncertainty ---
         # rate[0] is steady-state before ages[0]; rate[i] spans ages[i-1]→ages[i].
         # Build step arrays for rates[1:] (one horizontal segment per interval).
         n = len(ages_ka)
@@ -941,7 +941,7 @@ class CosmicAnalytical(object):
         Steady-state rates are shown as semi-transparent error bars.
         Steady-state uncertainty: δε_ss = ε_ss · (σ_C / C)  (first-order propagation).
 
-        Requires solve() and bootstrap() to have been called first.
+        Requires solve() and propagate_uncertainty() to have been called first.
         """
         from matplotlib import pyplot as plt
 

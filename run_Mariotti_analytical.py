@@ -38,8 +38,8 @@ for age, rate in zip(ages / 1000, rates):
 
 # Monte Carlo uncertainty propagation: perturb concentrations by their
 # 1-sigma errors and repeat the sequential solve for each replicate.
-print('\nRunning bootstrap (n=5000)...')
-ca.bootstrap(n_boot=5000)
+print('\nPropagating uncertainty (n=5000)...')
+ca.propagate_uncertainty(n_mc=5000)
 
 ca.save_summary('Mariotti_analytical_summary.csv')
 print('Summary statistics saved to Mariotti_analytical_summary.csv')
