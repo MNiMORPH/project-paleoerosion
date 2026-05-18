@@ -26,9 +26,10 @@ ca = CosmicAnalytical(
     # Lower-Deep and Upper-Deep are 120 yr apart — merged by cluster_dt=200.
     cluster_dt       = 200,
     # Muogenic production (Penprase et al. 2025): SLHL 0.196 at/g/yr,
-    # scaled by 1.150 to local conditions. Lambda_mu=None defaults to
-    # Lambda_sp (same attenuation length), matching Penprase's treatment.
+    # scaled by 1.150 to local conditions. Lambda_mu=5.6 m corresponds to
+    # stopped muons (Heisinger et al. 2002, ~1500 g/cm² / 2.7 g/cm³).
     P0_mu            = 0.225,
+    Lambda_mu        = 5.6,
 )
 
 if ca.cluster_dt:
